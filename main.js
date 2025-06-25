@@ -8,7 +8,7 @@ const player = {
   x: 50,
   y: canvas.height / 2 - 25,
   size: 50,
-  speed: 6
+  speed: 8  // Hızı artırıldı
 };
 
 // Engelleri tutan dizi
@@ -22,7 +22,7 @@ document.addEventListener('keyup',   e => keys[e.key] = false);
 
 const keys = {};
 
-// Buton elemanları
+// Mobil buton elemanları
 const upBtn = document.getElementById('upBtn');
 const downBtn = document.getElementById('downBtn');
 
@@ -40,22 +40,18 @@ function update() {
   if (keys['ArrowUp']   && player.y > 0)                         player.y -= player.speed;
   if (keys['ArrowDown'] && player.y < canvas.height - player.size) player.y += player.speed;
 
-  // Engel oluşturma
+  // Engel oluşturma (akışı hızlandırmak için sıklık artırıldı)
   frameCount++;
-  if (frameCount % 90 === 0) {
+  if (frameCount % 60 === 0) {  // Önce 90 idi, şimdi 60
     const height = 50 + Math.random() * (canvas.height / 2);
-    obstacles.push({ x: canvas.width, y: 0, width: 30, height, speed: 4 });
-    obstacles.push({ x: canvas.width, y: height + 150, width: 30, height: canvas.height - height - 150, speed: 4 });
+    const speed = 6 + Math.floor(score / 5);  // Zamanla hız artışı
+    obstacles.push({ x: canvas.width, y: 0, width: 30, height, speed });
+    obstacles.push({ x: canvas.width, y: height + 150, width: 30, height: canvas.height - height - 150, speed });
   }
 
   // Engelleri güncelle ve çarpışma kontrolü
-  for (let i = obstacles.length - 1; i >= 0; i--) {
-    const o = obstacles[i];
+  obstacles = obstacles.filter(o => {
     o.x -= o.speed;
-    if (o.x + o.width < 0) {
-      obstacles.splice(i, 1);
-      score += 0.5;
-    }
     if (
       player.x < o.x + o.width &&
       player.x + player.size > o.x &&
@@ -63,13 +59,19 @@ function update() {
       player.y + player.size > o.y
     ) {
       alert(`Oyun bitti! Puanın: ${Math.floor(score)}`);
+      // Oyun reset
       obstacles = [];
       score = 0;
       frameCount = 0;
       player.y = canvas.height / 2 - player.size/2;
-      return;
+      return false;
     }
-  }
+    if (o.x + o.width < 0) {
+      score += 0.5;
+      return false;
+    }
+    return true;
+  });
 }
 
 function draw() {
